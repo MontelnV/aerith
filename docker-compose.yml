@@ -1,0 +1,87 @@
+# Build & run: docker compose up --build
+# UI: http://localhost:${WEB_PORT:-8888}
+
+name: aerith
+
+networks:
+  default:
+    name: aerith-network
+
+x-clck-health: &clck-health
+  interval: 5s
+  timeout: 3s
+  retries: 10
+  start_period: 10s
+
+services:
+  db_app:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB__NAME:-aerith}
+      POSTGRES_PASSWORD: ${DB__PASSWORD:-change-me-app}
+      POSTGRES_USER: ${DB__USER:-aerith}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB__USER:-aerith}"]
+      <<: *clck-health
+    volumes:
+      - db_app_data:/var/lib/postgresql/data
+
+  db_datasets:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DATASETS__DB__NAME:-aerith_datasets}
+      POSTGRES_PASSWORD: ${DATASETS__DB__PASSWORD:-change-me-datasets}
+      POSTGRES_USER: ${DATASETS__DB__USER:-aerith_datasets}
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-U", "${DATASETS__DB__USER:-aerith_datasets}"]
+      <<: *clck-health
+    volumes:
+      - db_datasets_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    env_file:
+      - .env
+    environment:
+      DB__URL: postgresql+psycopg://${DB__USER:-aerith}:${DB__PASSWORD:-change-me-app}@db_app:5432/${DB__NAME:-aerith}
+      DATASETS__DB__URL: postgresql+psycopg://${DATASETS__DB__USER:-aerith_datasets}:${DATASETS__DB__PASSWORD:-change-me-datasets}@db_datasets:5432/${DATASETS__DB__NAME:-aerith_datasets}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    depends_on:
+      db_app:
+        condition: service_healthy
+      db_datasets:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-/api}
+    ports:
+      - "${WEB_PORT:-8888}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db_app_data:
+  db_datasets_data:

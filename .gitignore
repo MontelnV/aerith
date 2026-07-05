@@ -1,0 +1,10 @@
+__pycache__/
+.env
+.venv/
+.vscode/
+*.pyc
+chat.db
+chats/
+frontend/dist/
+frontend/node_modules/
+venv/
