@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { KeyRound, ShieldCheck } from "lucide-react";
+import { KeyRound, Palette, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { changePassword } from "../api/auth";
 import ProviderSettings from "../components/ProviderSettings";
 
@@ -56,9 +57,50 @@ export default function ProfilePage() {
         </div>
 
         <ProviderSettings />
+        <AppearanceSection />
         <PasswordSection />
       </div>
     </div>
+  );
+}
+
+function AppearanceSection() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <section className="settings-card">
+      <div className="settings-card__head">
+        <div className="settings-card__icon" aria-hidden>
+          <Palette size={15} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="settings-card__title">Appearance</h2>
+          <p className="settings-card__subtitle">Choose your preferred color theme</p>
+        </div>
+      </div>
+      <div className="theme-picker" role="radiogroup" aria-label="Color theme">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={theme === "light"}
+          className={`theme-picker__option${theme === "light" ? " is-active" : ""}`}
+          onClick={() => setTheme("light")}
+        >
+          <span className="theme-picker__swatch theme-picker__swatch--light" aria-hidden />
+          Light
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={theme === "dark"}
+          className={`theme-picker__option${theme === "dark" ? " is-active" : ""}`}
+          onClick={() => setTheme("dark")}
+        >
+          <span className="theme-picker__swatch theme-picker__swatch--dark" aria-hidden />
+          Dark
+        </button>
+      </div>
+    </section>
   );
 }
 
