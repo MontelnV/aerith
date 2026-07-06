@@ -103,45 +103,6 @@ export default function ChatPage() {
   const composerRef = useRef(null);
   const datasetPickerRef = useRef(null);
   const settledIdsRef = useRef(new Set());
-  const bounceRef = useRef(null);
-  const bounceState = useRef({ offset: 0, timer: null });
-
-  // Rubber-band overscroll: pulling down past the end stretches the chat
-  // column slightly and springs it back (mobile-like bounce on desktop).
-  const onWheelBounce = useCallback((e) => {
-    const el = scrollRef.current;
-    const target = bounceRef.current;
-    if (!el || !target || e.deltaY <= 0) return;
-
-    let node = e.target;
-    while (node && node !== el) {
-      const { overflowY } = getComputedStyle(node);
-      if (
-        (overflowY === "auto" || overflowY === "scroll") &&
-        node.scrollHeight > node.clientHeight + 1
-      ) {
-        return;
-      }
-      node = node.parentElement;
-    }
-
-    const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 2;
-    if (!atEnd) return;
-    const st = bounceState.current;
-    st.offset = Math.min(44, st.offset + e.deltaY * 0.1);
-    target.style.transition = "none";
-    target.style.transform = `translateY(${-st.offset}px)`;
-    clearTimeout(st.timer);
-    st.timer = setTimeout(() => {
-      target.style.transition = "transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15)";
-      target.style.transform = "translateY(0)";
-      st.offset = 0;
-    }, 100);
-  }, []);
-
-  useEffect(() => {
-    return () => clearTimeout(bounceState.current.timer);
-  }, []);
 
   // Messages scroll behind the glass composer; keep enough bottom padding so
   // the last message can rise fully above it (input grows up to 5 lines).
@@ -584,12 +545,11 @@ export default function ChatPage() {
             </div>
           ) : (
             <>
-              <div className="chat-messages-pane" ref={bounceRef}>
+              <div className="chat-messages-pane">
                 <div
                   className="chat-scroll h-full overflow-auto scroll-invisible"
                   ref={scrollRef}
                   onScroll={onScrollCheck}
-                  onWheel={onWheelBounce}
                 >
                   <div className="max-w-3xl mx-auto flex flex-col gap-4">
                     {(chat.messages || []).map((m) => {
@@ -673,6 +633,7 @@ export default function ChatPage() {
                       </button>
                     )}
                     <div className="chat-composer__box">
+                    <div className="chat-composer__input-scroll">
                     <textarea
                       ref={inputRef}
                       className="chat-composer__input"
@@ -692,6 +653,7 @@ export default function ChatPage() {
                         }
                       }}
                     />
+                    </div>
                     <div className="chat-composer__bottom">
                       <div className="chat-composer__tools">
                         <ModelPicker
