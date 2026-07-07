@@ -70,7 +70,7 @@ export default function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
           <div className="text-center text-xs text-muted mt-1">
-            Have an invite? <Link to="/invite" style={{ color: "var(--accent)" }}>Activate</Link>
+            No account yet? <Link to="/register" style={{ color: "var(--accent)" }}>Create one</Link>
           </div>
         </form>
       </div>

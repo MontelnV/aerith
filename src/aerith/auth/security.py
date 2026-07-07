@@ -1,4 +1,4 @@
-"""JWT, password hashing, invite-token and symmetric data-at-rest helpers."""
+"""JWT, password hashing, invite/email-code, and data-at-rest helpers."""
 
 from __future__ import annotations
 
@@ -110,3 +110,19 @@ def generate_invite_token() -> tuple[str, str]:
 
 def hash_invite_token(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def generate_email_code(length: int | None = None) -> str:
+    auth = get_settings().auth
+    code_length = length or auth.email_code_length
+    if code_length < 4:
+        raise RuntimeError("auth.email_code_length must be >= 4")
+    return "".join(str(secrets.randbelow(10)) for _ in range(code_length))
+
+
+def hash_email_code(raw: str) -> str:
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def verify_email_code(raw: str, code_hash: str) -> bool:
+    return secrets.compare_digest(hash_email_code(raw), code_hash)
