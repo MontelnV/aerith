@@ -36,6 +36,10 @@ class AuthConfig(BaseModel):
     cookie_samesite: str = "lax"
     cookie_secure: bool = False
     data_key: str = ""  # Fernet key; empty -> derived from jwt_secret
+    email_code_length: int = 6
+    email_code_max_attempts: int = 5
+    email_code_resend_cooldown_seconds: int = 60
+    email_code_ttl_minutes: int = 10
     invite_ttl_hours: int = 72
     jwt_algorithm: str = "HS256"
     jwt_secret: str = "change-me-in-production"
@@ -55,6 +59,17 @@ class LLMConfig(BaseModel):
     api_key: str = ""
     base_url: str = ""
     default_model: str = ""
+
+
+class MailConfig(BaseModel):
+    from_email: str = "no-reply@localhost"
+    from_name: str = "AERITH"
+    host: str = ""
+    password: str = ""
+    port: int = 587
+    use_ssl: bool = False
+    use_tls: bool = True
+    username: str = ""
 
 
 class ChatConfig(BaseModel):
@@ -102,6 +117,7 @@ class Settings(BaseSettings):
     datasets: DatasetsConfig = DatasetsConfig()
     db: DatabaseConfig = DatabaseConfig()
     llm: LLMConfig = LLMConfig()
+    mail: MailConfig = MailConfig()
     server: ServerConfig = ServerConfig()
 
     @computed_field
