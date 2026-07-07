@@ -110,11 +110,66 @@ export default function ChatPage() {
     const composer = composerRef.current;
     const scroller = scrollRef.current;
     if (!composer || !scroller) return undefined;
-    const ro = new ResizeObserver(() => {
+    const box = composer.querySelector(".chat-composer__box");
+    if (!box) return undefined;
+
+    const updateComposerClip = () => {
       scroller.style.setProperty("--composer-h", `${composer.offsetHeight}px`);
-    });
+      const scrollerRect = scroller.getBoundingClientRect();
+      const boxRect = box.getBoundingClientRect();
+      const width = scroller.clientWidth;
+      const clipInset = 2;
+      const top = Math.max(0, boxRect.top - scrollerRect.top + clipInset);
+      const left = Math.max(0, boxRect.left - scrollerRect.left + clipInset);
+      const right = Math.min(width, boxRect.right - scrollerRect.left - clipInset);
+      const bottom = Math.min(scroller.clientHeight, boxRect.bottom - scrollerRect.top - clipInset);
+      const radius = Math.min(
+        Math.max(0, (parseFloat(window.getComputedStyle(box).borderTopLeftRadius) || 24) - clipInset),
+        (right - left) / 2,
+        (bottom - top) / 2,
+      );
+      const entryY = top + radius;
+      const topCapPath = [
+        `M 0 0`,
+        `H ${width}`,
+        `V ${entryY}`,
+        `H ${right}`,
+        `Q ${right} ${top} ${right - radius} ${top}`,
+        `H ${left + radius}`,
+        `Q ${left} ${top} ${left} ${entryY}`,
+        `H 0`,
+        `Z`,
+      ].join(" ");
+      const composerPath = [
+        `M ${left + radius} ${top}`,
+        `H ${right - radius}`,
+        `Q ${right} ${top} ${right} ${top + radius}`,
+        `V ${bottom - radius}`,
+        `Q ${right} ${bottom} ${right - radius} ${bottom}`,
+        `H ${left + radius}`,
+        `Q ${left} ${bottom} ${left} ${bottom - radius}`,
+        `V ${top + radius}`,
+        `Q ${left} ${top} ${left + radius} ${top}`,
+        `Z`,
+      ].join(" ");
+      const path = `${topCapPath} ${composerPath}`;
+      const clipPath = `path("${path}")`;
+      scroller.style.clipPath = clipPath;
+      scroller.style.webkitClipPath = clipPath;
+    };
+
+    const ro = new ResizeObserver(updateComposerClip);
     ro.observe(composer);
-    return () => ro.disconnect();
+    ro.observe(scroller);
+    ro.observe(box);
+    updateComposerClip();
+    window.addEventListener("resize", updateComposerClip);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", updateComposerClip);
+      scroller.style.removeProperty("clip-path");
+      scroller.style.removeProperty("-webkit-clip-path");
+    };
   }, [chat]);
 
   const [railCollapsed, setRailCollapsed] = useState(() => {

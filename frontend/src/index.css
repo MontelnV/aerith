@@ -524,6 +524,10 @@ html[data-theme="light"] .chat-rail {
   display: flex;
   flex-direction: column;
   isolation: isolate;
+  --composer-bottom-gap: 18px;
+  --composer-top-gap: 4px;
+  --composer-radius: 24px;
+  --composer-edge: max(20px, calc((100% - 48rem) / 2));
 }
 .chat-scroll {
   flex: 1;
@@ -534,32 +538,6 @@ html[data-theme="light"] .chat-rail {
 .chat-messages-pane::after {
   content: "";
   display: none;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(var(--composer-h, 110px) + 32px);
-  pointer-events: none;
-  z-index: 8;
-  --composer-side: max(0px, calc((100% - 48rem) / 2 + 4px));
-  --composer-edge-feather: 30px;
-  --composer-edge-veil: color-mix(in srgb, var(--bg-base) 55%, transparent);
-  background:
-    linear-gradient(to right,
-      transparent 0,
-      transparent max(0px, calc(var(--composer-side) - var(--composer-edge-feather))),
-      var(--composer-edge-veil) var(--composer-side),
-      transparent calc(var(--composer-side) + var(--composer-edge-feather)),
-      transparent 100%),
-    linear-gradient(to left,
-      transparent 0,
-      transparent max(0px, calc(var(--composer-side) - var(--composer-edge-feather))),
-      var(--composer-edge-veil) var(--composer-side),
-      transparent calc(var(--composer-side) + var(--composer-edge-feather)),
-      transparent 100%);
-  background-repeat: no-repeat;
-  background-size: 100% 100%, 100% 100%;
-  background-position: left bottom, right bottom;
 }
 .chat-scroll-down {
   position: absolute;
@@ -591,7 +569,7 @@ html[data-theme="light"] .chat-rail {
 }
 
 .chat-composer {
-  padding: 4px 20px 18px;
+  padding: 4px 20px var(--composer-bottom-gap, 18px);
   flex-shrink: 0;
   background: transparent;
 }
@@ -618,7 +596,7 @@ html[data-theme="light"] .chat-rail {
     inset 0 -1px 0 rgba(255, 255, 255, 0.03),
     0 0 0 1px color-mix(in srgb, var(--border-subtle) 30%, transparent) inset,
     0 8px 22px -18px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+  overflow: visible;
 }
 .chat-composer--overlay .chat-composer__box:focus-within {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
