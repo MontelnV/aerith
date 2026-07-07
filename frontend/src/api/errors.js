@@ -13,6 +13,13 @@ const DETAIL_MESSAGES = {
   "Invalid invite": "Invalid invitation",
   "Invite expired": "Invitation has expired",
   "Login already taken": "This login is already taken",
+  "Email already registered": "This email is already registered",
+  "Invalid email address": "Please enter a valid email address",
+  "Invalid verification code": "Invalid verification code",
+  "Code expired": "Verification code has expired",
+  "Too many attempts": "Too many verification attempts. Request a new code.",
+  "Email delivery is not configured": "Email service is unavailable right now",
+  "Failed to send verification email": "Could not send verification email",
 };
 
 export async function parseErrorDetail(response) {
@@ -35,7 +42,16 @@ export async function parseErrorDetail(response) {
 
 export function isCredentialAuthPath(url) {
   const path = url.replace(/^https?:\/\/[^/]+/i, "").split("?")[0];
-  return path === "/auth/login" || path.endsWith("/auth/login");
+  return (
+    path === "/auth/login" ||
+    path.endsWith("/auth/login") ||
+    path === "/auth/register" ||
+    path.endsWith("/auth/register") ||
+    path === "/auth/verify-email" ||
+    path.endsWith("/auth/verify-email") ||
+    path === "/auth/resend-verification" ||
+    path.endsWith("/auth/resend-verification")
+  );
 }
 
 export function humanizeApiError(detail, status, { credentialForm = false } = {}) {
