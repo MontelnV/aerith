@@ -127,7 +127,6 @@ export default function ModuleSidebar({ module, extraNav = [], children }) {
             style={{
               background: "var(--bg-elevated)",
               borderColor: "var(--border-subtle)",
-              boxShadow: "0 -12px 40px rgba(12, 0, 50, 0.28)",
             }}
             role="menu"
           >

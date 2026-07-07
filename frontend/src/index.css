@@ -336,28 +336,28 @@ html[data-theme="dark"] #root::after {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.22;
+  opacity: 0.08;
   background-image:
     repeating-linear-gradient(
       112deg,
       transparent 0,
       transparent 64px,
-      rgba(255, 255, 255, 0.09) 64px,
-      rgba(255, 255, 255, 0.09) 65px
+      rgba(255, 255, 255, 0.04) 64px,
+      rgba(255, 255, 255, 0.04) 65px
     ),
     repeating-linear-gradient(
       -58deg,
       transparent 0,
       transparent 96px,
-      rgba(255, 255, 255, 0.07) 96px,
-      rgba(255, 255, 255, 0.07) 97px
+      rgba(255, 255, 255, 0.03) 96px,
+      rgba(255, 255, 255, 0.03) 97px
     ),
     repeating-linear-gradient(
       12deg,
       transparent 0,
       transparent 180px,
-      rgba(255, 255, 255, 0.045) 180px,
-      rgba(255, 255, 255, 0.045) 181px
+      rgba(255, 255, 255, 0.02) 180px,
+      rgba(255, 255, 255, 0.02) 181px
     );
   background-size: 160% 160%, 140% 140%, 180% 180%;
   background-position: 0 0, 20% 30%, 0 0;
@@ -529,28 +529,11 @@ html[data-theme="light"] .chat-rail {
   flex: 1;
   min-height: 0;
   isolation: isolate;
-  /* Bottom padding tracks the glass composer so the last message can fully
-     surface from underneath it. */
   padding: 20px 20px calc(var(--composer-h, 110px) + 10px);
-  /* Fade the stream before it reaches the glass composer (corners + body). */
-  mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 calc(100% - var(--composer-h, 110px) - 28px),
-    rgba(0, 0, 0, 0.35) calc(100% - var(--composer-h, 110px) + 4px),
-    transparent calc(100% - 14px)
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    #000 calc(100% - var(--composer-h, 110px) - 28px),
-    rgba(0, 0, 0, 0.35) calc(100% - var(--composer-h, 110px) + 4px),
-    transparent calc(100% - 14px)
-  );
 }
-/* Opaque side caps so square message corners don't peek past the rounded composer. */
 .chat-messages-pane::after {
   content: "";
+  display: none;
   position: absolute;
   left: 0;
   right: 0;
@@ -559,17 +542,23 @@ html[data-theme="light"] .chat-rail {
   pointer-events: none;
   z-index: 8;
   --composer-side: max(0px, calc((100% - 48rem) / 2 + 4px));
+  --composer-edge-feather: 30px;
+  --composer-edge-veil: color-mix(in srgb, var(--bg-base) 55%, transparent);
   background:
     linear-gradient(to right,
-      var(--bg-base) 0,
-      var(--bg-base) var(--composer-side),
-      transparent var(--composer-side)),
+      transparent 0,
+      transparent max(0px, calc(var(--composer-side) - var(--composer-edge-feather))),
+      var(--composer-edge-veil) var(--composer-side),
+      transparent calc(var(--composer-side) + var(--composer-edge-feather)),
+      transparent 100%),
     linear-gradient(to left,
-      var(--bg-base) 0,
-      var(--bg-base) var(--composer-side),
-      transparent var(--composer-side));
+      transparent 0,
+      transparent max(0px, calc(var(--composer-side) - var(--composer-edge-feather))),
+      var(--composer-edge-veil) var(--composer-side),
+      transparent calc(var(--composer-side) + var(--composer-edge-feather)),
+      transparent 100%);
   background-repeat: no-repeat;
-  background-size: 50.5% 100%, 50.5% 100%;
+  background-size: 100% 100%, 100% 100%;
   background-position: left bottom, right bottom;
 }
 .chat-scroll-down {
@@ -620,15 +609,16 @@ html[data-theme="light"] .chat-rail {
   pointer-events: auto;
 }
 .chat-composer--overlay .chat-composer__box {
-  background: color-mix(in srgb, var(--bg-elevated) 30%, transparent);
-  backdrop-filter: blur(24px) saturate(1.5);
-  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  background: color-mix(in srgb, var(--bg-elevated) 86%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border-color: color-mix(in srgb, var(--border-subtle) 65%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.09),
     inset 0 -1px 0 rgba(255, 255, 255, 0.03),
     0 0 0 1px color-mix(in srgb, var(--border-subtle) 30%, transparent) inset,
-    0 18px 50px -22px rgba(0, 0, 0, 0.55);
+    0 8px 22px -18px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
 .chat-composer--overlay .chat-composer__box:focus-within {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
@@ -636,7 +626,7 @@ html[data-theme="light"] .chat-rail {
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
     0 0 0 3px var(--accent-soft),
-    0 14px 44px -20px rgba(0, 0, 0, 0.5);
+    0 8px 22px -18px rgba(0, 0, 0, 0.45);
 }
 html[data-theme="light"] .chat-composer--overlay .chat-composer__box {
   background: color-mix(in srgb, var(--bg-elevated) 55%, transparent);
