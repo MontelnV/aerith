@@ -1,0 +1,105 @@
+name: Deploy to aerith.space
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: aerith-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and deploy
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    env:
+      COMPOSE_PROJECT_NAME: aerith
+      WEB_PORT: "127.0.0.1:8888"
+      API_PORT: "127.0.0.1:8000"
+      PUBLIC_URL: https://aerith.space
+      HEALTH_URL: http://127.0.0.1:8888/api/health
+      DB_NAME: aerith
+      DB_USER: aerith
+      DATASETS_DB_NAME: aerith_datasets
+      DATASETS_DB_USER: aerith_datasets
+      DB_PASSWORD: ${{ secrets.AERITH_DB_PASSWORD }}
+      DATASETS_DB_PASSWORD: ${{ secrets.AERITH_DATASETS_DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.AERITH_JWT_SECRET }}
+      SEED_ADMIN_PASSWORD: ${{ secrets.AERITH_SEED_ADMIN_PASSWORD }}
+      LLM_API_KEY: ${{ secrets.AERITH_LLM_API_KEY }}
+      LLM_BASE_URL: ${{ vars.AERITH_LLM_BASE_URL }}
+      LLM_DEFAULT_MODEL: ${{ vars.AERITH_LLM_DEFAULT_MODEL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          : "${DB_PASSWORD:?Missing GitHub secret AERITH_DB_PASSWORD}"
+          : "${DATASETS_DB_PASSWORD:?Missing GitHub secret AERITH_DATASETS_DB_PASSWORD}"
+          : "${JWT_SECRET:?Missing GitHub secret AERITH_JWT_SECRET}"
+          : "${SEED_ADMIN_PASSWORD:?Missing GitHub secret AERITH_SEED_ADMIN_PASSWORD}"
+
+      - name: Write production environment
+        run: |
+          umask 077
+          {
+            printf 'DB__NAME=%s\n' "$DB_NAME"
+            printf 'DB__USER=%s\n' "$DB_USER"
+            printf 'DB__PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'DATASETS__DB__NAME=%s\n' "$DATASETS_DB_NAME"
+            printf 'DATASETS__DB__USER=%s\n' "$DATASETS_DB_USER"
+            printf 'DATASETS__DB__PASSWORD=%s\n' "$DATASETS_DB_PASSWORD"
+            printf 'AUTH__JWT_SECRET=%s\n' "$JWT_SECRET"
+            printf 'AUTH__SEED_ADMIN_LOGIN=%s\n' "admin"
+            printf 'AUTH__SEED_ADMIN_PASSWORD=%s\n' "$SEED_ADMIN_PASSWORD"
+            printf 'AUTH__COOKIE_SECURE=%s\n' "true"
+            printf 'SERVER__PUBLIC_URL=%s\n' "$PUBLIC_URL"
+            printf 'CORS__ALLOWED_ORIGINS=%s\n' "[\"$PUBLIC_URL\"]"
+            printf 'WEB_PORT=%s\n' "$WEB_PORT"
+            printf 'API_PORT=%s\n' "$API_PORT"
+            printf 'VITE_API_BASE=%s\n' "/api"
+            if [ -n "$LLM_API_KEY" ]; then
+              printf 'LLM__API_KEY=%s\n' "$LLM_API_KEY"
+            fi
+            if [ -n "$LLM_BASE_URL" ]; then
+              printf 'LLM__BASE_URL=%s\n' "$LLM_BASE_URL"
+            fi
+            if [ -n "$LLM_DEFAULT_MODEL" ]; then
+              printf 'LLM__DEFAULT_MODEL=%s\n' "$LLM_DEFAULT_MODEL"
+            fi
+          } > .env
+
+      - name: Build images
+        run: docker compose build --pull
+
+      - name: Start services
+        run: docker compose up -d --remove-orphans
+
+      - name: Wait for application health
+        run: |
+          for attempt in {1..30}; do
+            if curl -fsS "$HEALTH_URL" >/dev/null; then
+              docker compose ps
+              exit 0
+            fi
+
+            echo "Waiting for AERITH health check (${attempt}/30)..."
+            sleep 5
+          done
+
+          docker compose ps
+          docker compose logs --tail=200 api web
+          exit 1
+
+      - name: Clean unused Docker data
+        if: success()
+        run: docker image prune -f
